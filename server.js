@@ -38,7 +38,17 @@ if (process.env.NODE_ENV !== "production") {
   );
 }
 
-app.use(express.json({ limit: "5mb" })); // parse JSON request bodies
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? ["http://localhost:5173", "https://unilink-backend-eight.vercel.app"]
+        : "http://localhost:5173",
+    credentials: true,
+  })
+);
+
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 
