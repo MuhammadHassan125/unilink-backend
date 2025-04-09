@@ -16,7 +16,7 @@ import eventRoutes from "./routes/eventRoutes.js";
 // eventRoutes
 import { connectDB } from "./lib/db.js";
 import adminRouter from "./routes/adminRoutes.js";
-import { setupSocket } from "./Configurations/socket.js"; // ✅ Import Socket Setup
+import { setupSocket } from "./Configurations/socket.js";
 // import { setupSocket } from "./socket.js";  // ✅ Make sure the `.js` extension is included
 
 dotenv.config();
@@ -26,17 +26,18 @@ const server = http.createServer(app); // ✅ Create HTTP Server
 const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
-// Setup Socket.io
-setupSocket(server); // ✅ Initialize Socket.io
 
-if (process.env.NODE_ENV !== "production") {
-  app.use(
-    cors({
-      origin: "https://unilink-backend-eight.vercel.app/",
-      credentials: true,
-    })
-  );
-}
+setupSocket(server); 
+
+// if (process.env.NODE_ENV !== "production") {
+//   app.use(
+//     cors({
+//       origin: "https://unilink-backend-eight.vercel.app/",
+//       credentials: true,
+//     })
+//   );
+// }
+app.use(cors({ origin: true, credentials: true }));
 
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
@@ -61,7 +62,10 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+connectDB();
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  connectDB();
 });
+
+export default app;
