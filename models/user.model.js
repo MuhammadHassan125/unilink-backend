@@ -17,6 +17,11 @@ const certificationSchema = new mongoose.Schema({
   endDate: { type: Date },
   description: { type: String },
   file: { type: String },
+  status: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
   isVerified: { type: Boolean, default: false },
 });
 
