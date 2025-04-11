@@ -503,7 +503,10 @@ export const getUserReport = async (req, res) => {
   try {
     const userId = req.user._id;
     console.log(userId, "UUSSSEERRR-IIDD");
-
+const userProfile=await User.findById(userId)
+if(!userProfile){
+  return res.status(404).json({ message: "User not found" });
+}
     // 🟢 Total Posts & Related Stats
     const totalPosts = await Post.countDocuments({ author: userId });
     const userPosts = await Post.find({ author: userId });
@@ -541,6 +544,7 @@ export const getUserReport = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      user:userProfile,
       data: {
         totalPosts,
         totalComments,

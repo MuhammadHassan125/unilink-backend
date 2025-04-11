@@ -28,15 +28,15 @@ export const getAllUsers = async (req, res) => {
 
 export const getPendingCertifications = async (req, res) => {
   try {
-    const users = await User.find()
+    const users = await User.find({ "certifications.0": { $exists: true } })
       .select("name email certifications skills")
-      .sort({ createdAt: -1 }); 
+      .sort({ createdAt: -1 });
 
     res.json({ success: true, users });
   } catch (error) {
     console.error("Error fetching pending certifications:", error);
-    res.status(500).json({ message: "Server error", error: error.message});
- }
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 // export const approveCertification = async (req, res) => {
@@ -64,7 +64,6 @@ export const getPendingCertifications = async (req, res) => {
 //   }
 // };
 
-
 // Approve Certification
 export const approveCertification = async (req, res) => {
   try {
@@ -74,10 +73,11 @@ export const approveCertification = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const cert = user.certifications.id(certId);
-    if (!cert) return res.status(404).json({ message: "Certification not found" });
+    if (!cert)
+      return res.status(404).json({ message: "Certification not found" });
 
     cert.status = "approved";
-    cert.isVerified = true; 
+    cert.isVerified = true;
 
     const allCertsVerified = user.certifications.every((c) => c.isVerified);
     user.isVerified = allCertsVerified;
@@ -100,7 +100,8 @@ export const rejectCertification = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const cert = user.certifications.id(certId);
-    if (!cert) return res.status(404).json({ message: "Certification not found" });
+    if (!cert)
+      return res.status(404).json({ message: "Certification not found" });
 
     cert.status = "rejected";
     cert.isVerified = false;
@@ -113,8 +114,6 @@ export const rejectCertification = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
 
 // export const getUserReportByAdmin = async (req, res) => {
 //   try {
@@ -251,5 +250,4 @@ export const assignHeadUser = async (req, res) => {
   }
 };
 
-export const deleteUserCompletely = async (req, res) => {
-};
+export const deleteUserCompletely = async (req, res) => {};
