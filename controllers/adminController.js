@@ -163,6 +163,68 @@ export const rejectCertification = async (req, res) => {
 //   }
 // };
 
+
+// ----------------------------------------SKILLS
+export const getUsersWithSkills = async (req, res) => {
+  try {
+    const users = await User.find({ "skills.0": { $exists: true } })
+      .select("name email skills")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error("Error fetching users with skills:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const approveSkill = async (req, res) => {
+  try {
+    const { userId, skillId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const skill = user.skills.id(skillId);
+    if (!skill) return res.status(404).json({ message: "Skill not found" });
+
+    skill.isSkillVerified = true;
+    skill.skillStatus = "approved";
+
+    user.isSkillsVerified = true;
+    await user.save();
+
+    res.json({ success: true, message: "Skill approved", user });
+  } catch (error) {
+    console.error("Error approving skill:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const rejectSkill = async (req, res) => {
+  try {
+    const { userId, skillId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const skill = user.skills.id(skillId);
+    if (!skill) return res.status(404).json({ message: "Skill not found" });
+
+    skill.isSkillVerified = false;
+    skill.skillStatus = "rejected";
+    
+    user.isSkillsVerified = false;
+    await user.save();
+
+    res.json({ success: true, message: "Skill rejected", user });
+  } catch (error) {
+    console.error("Error rejecting skill:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
 export const getUserReportByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;

@@ -370,55 +370,84 @@ export const getSkills = async (req, res) => {
 // ✅ Add a Skill
 export const addSkill = async (req, res) => {
   try {
-    const { skill } = req.body;
+    const { name, description, image } = req.body;
 
-    if (!skill) {
-      return res.status(400).json({ message: "Skill is required." });
+    if (!name) {
+      return res.status(400).json({ message: "Skill name is required." });
     }
+
+    let imageUrl = "";
+    if (image) {
+      const uploadResponse = await cloudinary.uploader.upload(image);
+      imageUrl = uploadResponse.secure_url;
+    }
+    console.log(imageUrl, "SKILL-ADD-IMAGE-URL");
+
+    const skill = {
+      // _id: new mongoose.Types.ObjectId(),
+      name,
+      description,
+      isSkillVerified: false,
+      image: imageUrl,
+      skillStatus: "pending",
+    };
 
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.skills.includes(skill)) {
-      return res.status(400).json({ message: "Skill already exists." });
-    }
-
     user.skills.push(skill);
     await user.save();
 
-    res.json({ success: true, data: user.skills });
+    res.status(201).json({
+      success: true,
+      message: "Skill added successfully.",
+      data: skill,
+    });
   } catch (error) {
     console.error("Error in addSkill:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// ✅ Update a Skill
 export const updateSkill = async (req, res) => {
   try {
-    const { oldSkill, newSkill } = req.body;
+    const { skillId, name, description, image } = req.body;
 
-    if (!oldSkill || !newSkill) {
-      return res
-        .status(400)
-        .json({ message: "Both old and new skills are required." });
-    }
-
+    // Find user by ID
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const skillIndex = user.skills.indexOf(oldSkill);
-    if (skillIndex === -1) {
-      return res.status(404).json({ message: "Skill not found." });
+    // Find skill by ID
+    const skill = user.skills.id(skillId);
+    if (!skill) {
+      return res.status(404).json({ message: "Skill not found" });
     }
 
-    user.skills[skillIndex] = newSkill;
+    // Update fields if provided
+    skill.name = name || skill.name;
+    skill.description = description || skill.description;
+    // skill.isSkillVerified =
+    //   typeof isSkillVerified === "boolean"
+    //     ? isSkillVerified
+    //     : skill.isSkillVerified;
+
+    // Handle image upload if a new one is provided
+    if (image) {
+      const uploadResult = await cloudinary.uploader.upload(image, {
+        folder: "skills",
+        resource_type: "auto", // Automatically detect the resource type
+      });
+      skill.image = uploadResult.secure_url; // Update the image URL
+    }
+
+    // Save the user with the updated skill
     await user.save();
 
+    // Respond with the updated skills
     res.json({ success: true, data: user.skills });
   } catch (error) {
     console.error("Error in updateSkill:", error);
@@ -426,29 +455,32 @@ export const updateSkill = async (req, res) => {
   }
 };
 
-// ✅ Delete a Skill
 export const deleteSkill = async (req, res) => {
   try {
-    const { skill } = req.body;
+    const { skillId } = req.body;
 
-    if (!skill) {
-      return res.status(400).json({ message: "Skill is required." });
-    }
-
+    // Find the user by ID
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const skillIndex = user.skills.indexOf(skill);
+    // Find the skill to delete
+    const skillIndex = user.skills.findIndex(
+      (skill) => skill._id.toString() === skillId
+    );
     if (skillIndex === -1) {
       return res.status(404).json({ message: "Skill not found." });
     }
 
-    user.skills.splice(skillIndex, 1);
+    // Remove the skill from the user's skills array
+    user.skills.splice(skillIndex, 1); // Removes the skill at the specified index
+
+    // Save the updated user document
     await user.save();
 
-    res.json({ success: true, data: user.skills });
+    // Send success response
+    res.json({ success: true, message: "Skill deleted", data: user.skills });
   } catch (error) {
     console.error("Error in deleteSkill:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -541,7 +573,7 @@ if(!userProfile){
       (sum, event) => sum + (event.shares ? event.shares.length : 0),
       0
     );
-
+    
     res.status(200).json({
       success: true,
       user:userProfile,

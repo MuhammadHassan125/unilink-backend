@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const experienceSchema = new mongoose.Schema({
@@ -15,14 +16,26 @@ const certificationSchema = new mongoose.Schema({
   institute: { type: String },
   startDate: { type: Date },
   endDate: { type: Date },
-  description: { type: String },
-  file: { type: String },
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   },
+  description: { type: String },
+  file: { type: String },
   isVerified: { type: Boolean, default: false },
+});
+const skillSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  isSkillVerified: { type: Boolean, default: false },
+  skillStatus: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
+  image: { type: String },
 });
 
 const educationSchema = new mongoose.Schema({
@@ -55,14 +68,14 @@ const userSchema = new mongoose.Schema(
     headline: { type: String, default: "Linkedin User" },
     location: { type: String, default: "Earth" },
     about: { type: String, default: "" },
-    skills: [String],
+    skills: [skillSchema],
 
     experience: [experienceSchema],
     education: [educationSchema],
     certifications: [certificationSchema],
 
     isVerified: { type: Boolean, default: false },
-
+    isSkillsVerified: { type: Boolean, default: false },
     connections: [
       {
         type: mongoose.Schema.Types.ObjectId,
